@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>한의원 지도</title>
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-grip" aria-hidden="true"></div>
+      <button class="sheet-toggle" id="sheetToggle" type="button" aria-label="목록 패널 열고 닫기">
+        목록 접기
+      </button>
+
+      <header class="app-header">
+        <div>
+          <h1>한의원 지도</h1>
+          <p>현재 데이터는 샘플 데이터입니다.</p>
+        </div>
+      </header>
+
+      <section class="controls" aria-label="검색과 필터">
+        <label class="field">
+          <span>검색</span>
+          <input id="searchInput" type="search" placeholder="이름, 주소, 진료분야 검색">
+        </label>
+
+        <div class="filter-grid">
+          <label class="field">
+            <span>지역</span>
+            <select id="regionFilter">
+              <option value="전체">전체</option>
+              <option value="서울">서울</option>
+              <option value="경기">경기</option>
+              <option value="인천">인천</option>
+              <option value="부산">부산</option>
+              <option value="대구">대구</option>
+              <option value="광주">광주</option>
+              <option value="대전">대전</option>
+              <option value="울산">울산</option>
+              <option value="세종">세종</option>
+              <option value="강원">강원</option>
+              <option value="충북">충북</option>
+              <option value="충남">충남</option>
+              <option value="전북">전북</option>
+              <option value="전남">전남</option>
+              <option value="경북">경북</option>
+              <option value="경남">경남</option>
+              <option value="제주">제주</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>진료분야</span>
+            <select id="specialtyFilter">
+              <option value="전체">전체</option>
+              <option value="피부미용">피부미용</option>
+              <option value="근골격">근골격</option>
+              <option value="추나">추나</option>
+              <option value="한약">한약</option>
+              <option value="보약">보약</option>
+              <option value="체질상담">체질상담</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="field">
+          <span>전문의 여부</span>
+          <select id="specialistFilter">
+            <option value="전체">전체</option>
+            <option value="있음">전문의 있음</option>
+            <option value="없음">전문의 없음</option>
+          </select>
+        </label>
+
+        <div class="button-row">
+          <button class="primary-button" id="searchInMapButton" type="button">현재 지도 영역에서 검색</button>
+          <button class="secondary-button" id="resetButton" type="button">필터 초기화</button>
+        </div>
+
+        <button class="add-button" id="openAddModalButton" type="button">한의원 추가</button>
+      </section>
+
+      <section class="result-section" aria-label="한의원 목록">
+        <div class="result-header">
+          <h2>검색 결과</h2>
+          <span id="resultCount">0개</span>
+        </div>
+        <div class="clinic-list" id="clinicList"></div>
+      </section>
+    </aside>
+
+    <main class="map-area">
+      <div id="map" aria-label="한의원 지도"></div>
+      <div class="map-pick-notice hidden" id="mapPickNotice">
+        지도에서 등록할 위치를 클릭하세요.
+      </div>
+    </main>
+  </div>
+
+  <div class="modal hidden" id="addModal" role="dialog" aria-modal="true" aria-labelledby="addModalTitle">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <div>
+          <h2 id="addModalTitle">한의원 추가</h2>
+          <p>입력한 데이터는 이 브라우저의 localStorage에만 저장됩니다.</p>
+        </div>
+        <button class="icon-button" id="closeAddModalButton" type="button" aria-label="닫기">×</button>
+      </div>
+
+      <form id="clinicForm" class="clinic-form">
+        <label class="field">
+          <span>한의원 이름</span>
+          <input id="clinicName" type="text" required placeholder="예: 샘플온 한의원">
+        </label>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>지역</span>
+            <select id="clinicRegion" required>
+              <option value="">선택</option>
+              <option value="서울">서울</option>
+              <option value="경기">경기</option>
+              <option value="인천">인천</option>
+              <option value="부산">부산</option>
+              <option value="대구">대구</option>
+              <option value="광주">광주</option>
+              <option value="대전">대전</option>
+              <option value="울산">울산</option>
+              <option value="세종">세종</option>
+              <option value="강원">강원</option>
+              <option value="충북">충북</option>
+              <option value="충남">충남</option>
+              <option value="전북">전북</option>
+              <option value="전남">전남</option>
+              <option value="경북">경북</option>
+              <option value="경남">경남</option>
+              <option value="제주">제주</option>
+            </select>
+          </label>
+
+          <label class="field">
+            <span>전화번호</span>
+            <input id="clinicPhone" type="tel" required placeholder="02-0000-0000">
+          </label>
+        </div>
+
+        <label class="field">
+          <span>주소</span>
+          <input id="clinicAddress" type="text" required placeholder="샘플 주소를 입력하세요">
+        </label>
+
+        <fieldset class="checkbox-group">
+          <legend>진료분야 다중 선택</legend>
+          <label><input type="checkbox" name="specialties" value="피부미용"> 피부미용</label>
+          <label><input type="checkbox" name="specialties" value="근골격"> 근골격</label>
+          <label><input type="checkbox" name="specialties" value="추나"> 추나</label>
+          <label><input type="checkbox" name="specialties" value="한약"> 한약</label>
+          <label><input type="checkbox" name="specialties" value="보약"> 보약</label>
+          <label><input type="checkbox" name="specialties" value="체질상담"> 체질상담</label>
+        </fieldset>
+
+        <label class="check-line">
+          <input id="clinicHasSpecialist" type="checkbox">
+          전문의 있음
+        </label>
+
+        <label class="field">
+          <span>설명</span>
+          <textarea id="clinicDescription" required rows="3" placeholder="샘플 한의원 설명을 입력하세요"></textarea>
+        </label>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>위도</span>
+            <input id="clinicLat" type="number" step="0.000001" required placeholder="37.566500">
+          </label>
+          <label class="field">
+            <span>경도</span>
+            <input id="clinicLng" type="number" step="0.000001" required placeholder="126.978000">
+          </label>
+        </div>
+
+        <button class="secondary-button full-button" id="pickLocationButton" type="button">지도에서 위치 선택</button>
+
+        <div class="modal-actions">
+          <button class="secondary-button" id="cancelAddButton" type="button">취소</button>
+          <button class="primary-button" type="submit">추가 저장</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal hidden" id="bookingModal" role="dialog" aria-modal="true" aria-labelledby="bookingModalTitle">
+    <div class="modal-panel booking-panel">
+      <div class="modal-header">
+        <div>
+          <h2 id="bookingModalTitle">예약 신청</h2>
+          <p>실제 예약이 아닌 샘플 예약 화면입니다. 입력한 내용은 이 브라우저에만 저장됩니다.</p>
+        </div>
+        <button class="icon-button" id="closeBookingModalButton" type="button" aria-label="닫기">×</button>
+      </div>
+
+      <form id="bookingForm" class="clinic-form booking-form">
+        <input id="bookingClinicId" type="hidden">
+        <input id="bookingTime" type="hidden" required>
+
+        <div class="booking-summary">
+          <strong id="bookingClinicName">한의원명</strong>
+          <span id="bookingClinicMeta">지역 · 주소</span>
+        </div>
+
+        <label class="field">
+          <span>예약 날짜</span>
+          <input id="bookingDate" type="date" required>
+        </label>
+
+        <div class="field">
+          <span>예약 시간</span>
+          <div class="time-slot-grid" id="timeSlotGrid"></div>
+        </div>
+
+        <div class="form-grid">
+          <label class="field">
+            <span>예약자 이름</span>
+            <input id="bookingName" type="text" required placeholder="홍길동">
+          </label>
+          <label class="field">
+            <span>연락처</span>
+            <input id="bookingPhone" type="tel" required placeholder="010-0000-0000">
+          </label>
+        </div>
+
+        <label class="field">
+          <span>요청사항</span>
+          <textarea id="bookingMemo" rows="3" placeholder="샘플 요청사항을 입력하세요"></textarea>
+        </label>
+
+        <label class="check-line">
+          <input id="bookingConsent" type="checkbox" required>
+          샘플 예약 저장에 동의합니다.
+        </label>
+
+        <p class="booking-confirmation hidden" id="bookingConfirmation"></p>
+
+        <div class="modal-actions">
+          <button class="secondary-button" id="cancelBookingButton" type="button">취소</button>
+          <button class="primary-button" type="submit">예약 신청</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
