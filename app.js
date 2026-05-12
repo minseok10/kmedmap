@@ -379,6 +379,10 @@ function bindEvents() {
     sheetToggle.textContent = sidebar.classList.contains("collapsed") ? "목록 열기" : "목록 접기";
     setTimeout(() => map.invalidateSize(), 240);
   });
+
+  window.addEventListener("resize", () => {
+    map.invalidateSize();
+  });
 }
 
 function applyFilters() {
@@ -545,6 +549,7 @@ function startLocationPick() {
   selectingLocation = true;
   addModal.classList.add("hidden");
   mapPickNotice.classList.remove("hidden");
+  collapseMobileSheet();
 }
 
 function addClinic(event) {
@@ -605,6 +610,7 @@ function openBookingModal(clinicId) {
   bookingConfirmation.textContent = "";
   renderTimeSlots();
   bookingModal.classList.remove("hidden");
+  collapseMobileSheet();
 }
 
 function closeBookingModal() {
@@ -721,6 +727,14 @@ function getTodayDateString() {
   const date = String(today.getDate()).padStart(2, "0");
 
   return `${year}-${month}-${date}`;
+}
+
+function collapseMobileSheet() {
+  if (window.innerWidth > 760) return;
+
+  sidebar.classList.add("collapsed");
+  sheetToggle.textContent = "목록 열기";
+  setTimeout(() => map.invalidateSize(), 240);
 }
 
 // 사용자가 입력한 글자를 HTML로 넣을 때 문제가 생기지 않도록 바꿔주는 작은 함수입니다.
